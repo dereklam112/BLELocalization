@@ -15,6 +15,7 @@ const App = () => {
   const peripherals = new Map();
   const [list, setList] = useState([]);
 
+  // get bluetooth permission
   const requestPermission = async () => {
     try {
       const granted = await PermissionsAndroid.request(
@@ -39,6 +40,7 @@ const App = () => {
     }
   }
   
+  // check the bluetooth state, request the user to turn on bluetooth when it is off
   const btState = () => {
     BleManager.enableBluetooth()
     .then(() => {
@@ -53,6 +55,7 @@ const App = () => {
     });
   }
   
+  // scan nearby ble device
   const startScan = () => {
     if (!isScanning) {
       BleManager.scan([], 3, true).then((results) => {
@@ -69,7 +72,16 @@ const App = () => {
     setIsScanning(false);
   }
   
-  
+  // get scanned ble device info
+  const handleDiscoverPeripheral = (peripheral) => {
+    console.log('Detected BLE Device', peripheral);
+    if (!peripheral.name) {
+      peripheral.name = 'NO NAME';
+    }
+    peripherals.set(peripheral.id, peripheral);
+    setList(Array.from(peripherals.values()));
+  }
+
   const handleDisconnectedPeripheral = (data) => {
     let peripheral = peripherals.get(data.peripheral);
     if (peripheral) {
@@ -78,16 +90,6 @@ const App = () => {
       setList(Array.from(peripherals.values()));
     }
     console.log('Disconnected from ' + data.peripheral);
-  }
-  
-  const handleDiscoverPeripheral = (peripheral) => {
-    console.log('Detected BLE Device', peripheral);
-    if (!peripheral.name) {
-      peripheral.name = 'NO NAME';
-    }
-    peripherals.set(peripheral.id, peripheral);
-    setList(Array.from(peripherals.values()));
-    // console.log(list);
   }
 
   useEffect(() => {
@@ -105,6 +107,7 @@ const App = () => {
     })
   }, []);
 
+  // display the info of scanned ble devices
   const renderItem = (item) => {
     const color = item.connected ? 'green' : '#fff';
     return (
@@ -116,6 +119,7 @@ const App = () => {
     );
   }
 
+  // app ui
   return (
     <>
       <SafeAreaView>
@@ -160,6 +164,7 @@ const App = () => {
   );
 };
 
+//app css
 const styles = StyleSheet.create({
   scrollView: {
     backgroundColor: Colors.lighter,
