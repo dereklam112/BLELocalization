@@ -3,9 +3,8 @@
  */
 
 import {AppRegistry} from 'react-native';
-// import App from './App';
-import App from './main/BLEScanner';
+import App from './App';
 import {name as appName} from './app.json';
-
+import Database from './main/Database';
 
 AppRegistry.registerComponent(appName, () => App);

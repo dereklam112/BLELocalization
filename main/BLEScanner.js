@@ -12,7 +12,7 @@ LogBox.ignoreLogs(['new NativeEventEmitter']);
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
-const App = () => {
+const BLEScanner = ({navigation}) => {
   const [isScanning, setIsScanning] = useState(false);
   const peripherals = new Map();
   const [list, setList] = useState([]);
@@ -62,7 +62,8 @@ const App = () => {
   // scan nearby ble device
   const startScan = () => {
     if (!isScanning) {
-      BleManager.scan([], 5, true).then((results) => {
+      // scan for Eddystone Service UUID (feaa)
+      BleManager.scan(["feaa"], 5, true).then((results) => {
         console.log('Scanning...');
         setIsScanning(true);
       }).catch(err => {
@@ -79,9 +80,6 @@ const App = () => {
   // get scanned ble device info
   const handleDiscoverPeripheral = (peripheral) => {
     console.log('Detected BLE Device', peripheral.id, peripheral.rssi);
-    // if (!peripheral.name) {
-    //   peripheral.name = 'NO NAME';
-    // }
     peripherals.set(peripheral.id, peripheral);
     setList(Array.from(peripherals.values()));
   }
@@ -159,7 +157,7 @@ const App = () => {
           <Text style={styles.title}>Selected BLE devices</Text>
           <Text style={{textAlign:"center"}}>(Press to remove)</Text>
           {discoveredBleList.map((item, key)=>(
-            <Button title={item} onPress = {()=>
+            <Button key={key} title={item} onPress = {()=>
               removeDevice(item)
             }/>
           ))}
@@ -243,4 +241,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default BLEScanner;
