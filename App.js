@@ -1,22 +1,58 @@
-import 'react-native-gesture-handler';
-
 import React from 'react';
+import 'react-native-gesture-handler';
 import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, LogBox } from "react-native";
 
 // import all page
 import BLEScanner from './main/BLEScanner';
+import Database from './main/Database';
 
 LogBox.ignoreAllLogs();
 
-const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="BLEScanner">
-        <Stack.Screen
+      <Tab.Navigator initialRouteName="BLEScanner">
+
+        {/* Configuration Page */}
+        <Tab.Screen
+          name="BLEScanner"
+          component={BLEScanner}
+          options={{
+            title: 'BLE Beacon',
+            headerStyle: {
+              backgroundColor: '#f7764f',
+              height: 40,
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold', 
+            },
+          }}
+        />
+
+        {/* Showing user location */}
+        <Tab.Screen
+          name="db"
+          component={Database}
+          options={{
+            title: 'db',
+            headerStyle: {
+              backgroundColor: '#f7764f',
+              height: 40,
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold', 
+            },
+          }}
+        />
+
+        {/* Showing user left */}
+        {/* <Tab.Screen
           name="BLEScanner"
           component={BLEScanner}
           options={{
@@ -30,8 +66,8 @@ const App = () => {
               fontWeight: 'bold', 
             },
           }}
-        />
-      </Stack.Navigator>
+        /> */}
+      </Tab.Navigator>
     </NavigationContainer>
   );
 };
