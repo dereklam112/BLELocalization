@@ -16,6 +16,7 @@ const App = () => {
   const [isScanning, setIsScanning] = useState(false);
   const peripherals = new Map();
   const [list, setList] = useState([]);
+  const [discoveredBleList, setDiscoveredBleList] = useState([]);
   const LoopTime = 10000; //10 sec
 
   // get bluetooth permission
@@ -78,9 +79,9 @@ const App = () => {
   // get scanned ble device info
   const handleDiscoverPeripheral = (peripheral) => {
     console.log('Detected BLE Device', peripheral.id, peripheral.rssi);
-    if (!peripheral.name) {
-      peripheral.name = 'NO NAME';
-    }
+    // if (!peripheral.name) {
+    //   peripheral.name = 'NO NAME';
+    // }
     peripherals.set(peripheral.id, peripheral);
     setList(Array.from(peripherals.values()));
   }
@@ -122,28 +123,29 @@ const App = () => {
     })
   }, []);
 
-  //looping the scan process every 10 sec
-  // useEffect (() => {
-  //   const interval = setInterval ( async () =>{
-  //       btState();
-  //       const permission = await requestPermission();
-  //       if (permission) {
-  //         startScan()
-  //       }
-  //     console.log("log every 10 seconds")
-  //   }, LoopTime)
-  //   return () => clearInterval(interval);
-  // },[])
-
   // display the info of scanned ble devices
   const renderItem = (item) => {
-    const color = item.connected ? 'green' : '#fff';
     return (
-        <View style={[styles.row, {backgroundColor: color}]}>
-          <Text style={{fontSize: 12, textAlign: 'center', color: '#333333', padding: 10}}>{item.name}</Text>
-          <Text style={{fontSize: 10, textAlign: 'center', color: '#333333', padding: 2}}>RSSI: {item.rssi}</Text>
-          <Text style={{fontSize: 8, textAlign: 'center', color: '#333333', padding: 2, paddingBottom: 20}}>{item.id}</Text>
+        <View style={[styles.row]}>
+          {/*set the target ble beacons*/}
+          <Button
+            title={item.id}
+            onPress = {()=>{
+              if (discoveredBleList.indexOf(item.id) === -1)
+              setDiscoveredBleList([...discoveredBleList, item.id]);
+              console.log(discoveredBleList);
+            }}
+            style = {{paddingTop: 5}}
+            color = "green"
+          />
+          <Text style={{fontSize: 12, textAlign: 'center', color: '#333333', padding: 2}}>RSSI: {item.rssi}</Text>
         </View>
+    );
+  }
+
+  const removeDevice = (item) => {
+    setDiscoveredBleList((prevState) =>
+      prevState.filter((prevItem) => prevItem !== item)
     );
   }
 
@@ -151,42 +153,46 @@ const App = () => {
   return (
     <>
       <SafeAreaView>
+
+        {/* display the select ble beacon */}
+        <View style={{minHeight:100}}>
+          <Text style={styles.title}>Selected BLE devices</Text>
+          <Text style={{textAlign:"center"}}>(Press to remove)</Text>
+          {discoveredBleList.map((item, key)=>(
+            <Button title={item} onPress = {()=>
+              removeDevice(item)
+            }/>
+          ))}
+        </View>
+
         <ScrollView
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollView}>
+
           {global.HermesInternal == null ? null : (
             <View style={styles.engine}>
               <Text style={styles.footer}>Engine: Hermes</Text>
             </View>
           )}
-          <View style={styles.body}>
-            
-            <View>
-              <Button 
-                title={'Scan Bluetooth (' + (isScanning ? 'Scanning...' : 'off') + ')'}
-                onPress={ async() =>{
-                  btState();
-                  const permission = await requestPermission();
-                  if (permission) {
-                    startScan()
-                  }
-                }}
-              />
-            </View>
 
+          <View style={styles.body}>
+            <View>
+              <Text style={styles.title}>Scan Bluetooth ({isScanning ? "Scanning..." : "off"})</Text>
+            </View>
             {(list.length == 0) &&
               <View style={{flex:1, margin: 20}}>
                 <Text style={{textAlign: 'center'}}>No peripherals</Text>
               </View>
             }
-          
-          </View>              
+          </View>
         </ScrollView>
+
         <FlatList
             data={list}
             renderItem={({ item }) => renderItem(item) }
             keyExtractor={item => item.id}
-          />              
+          />  
+
       </SafeAreaView>
     </>
   );
@@ -200,6 +206,11 @@ const styles = StyleSheet.create({
   engine: {
     position: 'absolute',
     right: 0,
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: 24,
+    fontWeight: 'bold'
   },
   body: {
     backgroundColor: Colors.white,
