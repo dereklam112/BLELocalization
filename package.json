@@ -26,6 +26,7 @@
     "react-native-dialog": "^9.2.1",
     "react-native-dialog-input": "^1.0.8",
     "react-native-gesture-handler": "^2.3.2",
+    "react-native-kontaktio": "^3.1.0",
     "react-native-modal-datetime-picker": "^13.1.2",
     "react-native-reanimated": "^2.6.0",
     "react-native-safe-area-context": "^4.2.4",
