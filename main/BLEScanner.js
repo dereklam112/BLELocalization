@@ -2,12 +2,22 @@ import React, {useState, useEffect,} from 'react';
 import {
   SafeAreaView, StyleSheet, ScrollView, View, 
   Text, NativeModules, NativeEventEmitter, 
-  Button, PermissionsAndroid, FlatList,
+  Button, PermissionsAndroid, FlatList, Alert
 } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import BleManager from './BleManager';
 import { LogBox } from 'react-native';
 LogBox.ignoreLogs(['new NativeEventEmitter']);
+import { openDatabase } from 'react-native-sqlite-storage';
+
+// connect to the sqlite db
+const db = openDatabase(
+  {
+    name: 'ble_db.db', 
+    createFromLocation: 1
+  }, () => {},
+  error => {console.log(error)}
+);
 
 const BleManagerModule = NativeModules.BleManager;
 const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
@@ -129,9 +139,7 @@ const BLEScanner = ({navigation}) => {
           <Button
             title={item.id}
             onPress = {()=>{
-              if (discoveredBleList.indexOf(item.id) === -1)
-              setDiscoveredBleList([...discoveredBleList, item.id]);
-              console.log(discoveredBleList);
+              addDevice(item);
             }}
             style = {{paddingTop: 5}}
             color = "green"
@@ -141,10 +149,44 @@ const BLEScanner = ({navigation}) => {
     );
   }
 
+  // add target ble
+  const addDevice = (item) => {
+    if (discoveredBleList.indexOf(item.id) === -1){
+      setDiscoveredBleList([...discoveredBleList, item.id]);
+      // setSelectedBle(item.id);
+      // add to db
+      db.transaction(function(tx){
+        tx.executeSql(
+          "INSERT INTO ble_device (mac_address) VALUES (?)",[item.id],
+          (tx, res) => {
+            console.log("Result", res.rowsAffected);
+            if (res.rowsAffected > 0){
+              console.log("Data inserted")
+            }
+          }
+        )
+      })
+    }
+    console.log(discoveredBleList);
+  }
+
+  // remove selected ble
   const removeDevice = (item) => {
     setDiscoveredBleList((prevState) =>
       prevState.filter((prevItem) => prevItem !== item)
     );
+    db.transaction(function(tx){
+      tx.executeSql(
+        "DELETE FROM ble_device WHERE mac_address=?",[item],
+        (tx, res) => {
+          console.log("Result", res.rowsAffected);
+          if (res.rowsAffected > 0){
+            console.log("Data deleted")
+          }
+        }
+      )
+    })
+    console.log(discoveredBleList);
   }
 
   // app ui
@@ -189,7 +231,7 @@ const BLEScanner = ({navigation}) => {
             data={list}
             renderItem={({ item }) => renderItem(item) }
             keyExtractor={item => item.id}
-          />  
+          /> 
 
       </SafeAreaView>
     </>
