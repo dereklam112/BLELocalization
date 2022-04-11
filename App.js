@@ -7,7 +7,7 @@ import { openDatabase } from 'react-native-sqlite-storage';
 
 // import all page
 import BLEScanner from './main/BLEScanner';
-import Dialog from './main/Dialog';
+import BLESetting from './main/BLESetting';
 
 LogBox.ignoreAllLogs();
 // connect pre-populated database
@@ -24,7 +24,7 @@ const App = () => {
           if (res.rows.length == 0) {
             txn.executeSql('DROP TABLE IF EXISTS ble_device', []);
             txn.executeSql(
-              'CREATE TABLE IF NOT EXISTS ble_device(mac_address VARCHAR(255) PRIMARY KEY)',[]);
+              'CREATE TABLE IF NOT EXISTS ble_device(mac_address VARCHAR(255) PRIMARY KEY, name TEXT)',[]);
           }
         }
       );
@@ -54,7 +54,7 @@ const App = () => {
         {/* Showing user location */}
         <Tab.Screen
           name="Setting"
-          component={Dialog}
+          component={BLESetting}
           options={{
             title: 'Setting',
             headerStyle: {
