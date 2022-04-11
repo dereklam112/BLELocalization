@@ -8,6 +8,7 @@ import { openDatabase } from 'react-native-sqlite-storage';
 // import all page
 import BLEScanner from './main/BLEScanner';
 import BLESetting from './main/BLESetting';
+import Location from './main/Location'
 
 LogBox.ignoreAllLogs();
 // connect pre-populated database
@@ -32,9 +33,26 @@ const App = () => {
   }, []);
   return (
     <NavigationContainer>
-      <Tab.Navigator initialRouteName="BLEScanner">
+      <Tab.Navigator initialRouteName="Location">
 
-        {/* Configuration Page */}
+        {/* Showing user left */}
+        <Tab.Screen
+          name="Homepage"
+          component={Location}
+          options={{
+            title: 'Homepage',
+            headerStyle: {
+              backgroundColor: '#f7764f',
+              height: 40,
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold', 
+            },
+          }}
+        />
+
+        {/* Scanning ble device */}
         <Tab.Screen
           name="BLEScanner"
           component={BLEScanner}
@@ -51,7 +69,7 @@ const App = () => {
           }}
         />
 
-        {/* Showing user location */}
+        {/* Setting tab */}
         <Tab.Screen
           name="Setting"
           component={BLESetting}
@@ -68,22 +86,6 @@ const App = () => {
           }}
         />
 
-        {/* Showing user left */}
-        {/* <Tab.Screen
-          name="BLEScanner"
-          component={BLEScanner}
-          options={{
-            title: 'Home',
-            headerStyle: {
-              backgroundColor: '#f7764f',
-              height: 40,
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold', 
-            },
-          }}
-        /> */}
       </Tab.Navigator>
     </NavigationContainer>
   );

@@ -2,7 +2,7 @@ import React, {useState, useEffect,} from 'react';
 import {
   SafeAreaView, StyleSheet, ScrollView, View, 
   Text, NativeModules, NativeEventEmitter, 
-  Button, PermissionsAndroid, FlatList, Alert
+  Button, PermissionsAndroid, FlatList,
 } from 'react-native';
 import { Colors } from 'react-native/Libraries/NewAppScreen';
 import BleManager from './BleManager';
@@ -42,10 +42,10 @@ const BLEScanner = ({navigation}) => {
         }
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Permission is OK');
+        // console.log('Permission is OK');
         return true;
       } else {
-        console.log('Permission denied');
+        // console.log('Permission denied');
         return false;
       }
     } catch (err) {
@@ -59,12 +59,12 @@ const BLEScanner = ({navigation}) => {
     BleManager.enableBluetooth()
     .then(() => {
       // Success code
-      console.log("The bluetooth is already enabled or the user confirm");
+      // console.log("The bluetooth is already enabled or the user confirm");
       return(true)
     })
     .catch((error) => {
       // Failure code
-      console.log("The user refuse to enable bluetooth");
+      // console.log("The user refuse to enable bluetooth");
       return(false)
     });
   }
@@ -89,7 +89,7 @@ const BLEScanner = ({navigation}) => {
   
   // get scanned ble device info
   const handleDiscoverPeripheral = (peripheral) => {
-    console.log('Detected BLE Device', peripheral.id, peripheral.rssi);
+    // console.log('Detected BLE Device', peripheral.id, peripheral.rssi);
     peripherals.set(peripheral.id, peripheral);
     setList(Array.from(peripherals.values()));
   }
@@ -118,7 +118,7 @@ const BLEScanner = ({navigation}) => {
       if (permission) {
         startScan()
       }
-      console.log("log every 10 seconds")
+      // console.log("log every 10 seconds")
     }, LoopTime)
 
     
