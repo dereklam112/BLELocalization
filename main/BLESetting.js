@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { StyleSheet, TouchableOpacity, View, SafeAreaView, 
           Text, ScrollView, RefreshControl, Button, FlatList  } from "react-native";
 import Dialog from "react-native-dialog";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { openDatabase } from 'react-native-sqlite-storage';
 const db = openDatabase(
     {
@@ -18,7 +19,11 @@ export default function BLESetting({navigation}) {
   const [refresh, setRefresh] = useState(false);
   const [text, onChangeText] = useState("");
   const [ble, setBle] = useState("");
+  const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
+  const [fromTime, setFromTime] = useState(new Date);
+  const [toTime, setToTime] = useState(new Date);
 
+  // get db data
   useEffect(() => {
     db.transaction((tx) => {
       tx.executeSql(
@@ -41,6 +46,35 @@ export default function BLESetting({navigation}) {
     });
   }, [refresh]);
 
+  useEffect(()=>{
+    db.transaction(function(tx){
+      tx.executeSql(
+        "UPDATE alert_time SET from=? WHERE id=1",[JSON.stringify(fromTime)],
+        (tx, res) => {
+          console.log("Result", res.rowsAffected);
+          if (res.rowsAffected > 0){
+            console.log("Data Updated")
+          }
+        }
+      )
+    })
+  },[fromTime])
+
+  useEffect(()=>{
+    db.transaction(function(tx){
+      tx.executeSql(
+        "UPDATE alert_time SET to=? WHERE id=1",[JSON.stringify(toTime)],
+        (tx, res) => {
+          console.log("Result", res.rowsAffected);
+          if (res.rowsAffected > 0){
+            console.log("Data Updated")
+          }
+        }
+      )
+    })
+  },[toTime])
+
+  // handle dialog
   const showDialog = (e) => {
     setBle(e.mac_address);
     setVisible(true);
@@ -65,6 +99,28 @@ export default function BLESetting({navigation}) {
     setVisible(false);
   };
 
+  // handle time picker
+  const showTimePicker = () => {
+    setTimePickerVisibility(true);
+  };
+
+  const hideTimePicker = () => {
+    setTimePickerVisibility(false);
+  };
+
+  const handleFromTimePicker = (time) => {
+    console.warn("A time has been picked: ", time);
+    setFromTime(time);
+    hideTimePicker();
+  };
+
+  const handleToTimePicker = (time) => { 
+    console.warn("A time has been picked: ", time);
+    setToTime(time);
+    hideTimePicker();
+  };
+
+  // handle screen refresh
   const wait = (timeout) => {
     return new Promise(resolve => setTimeout(resolve, timeout));
   }
@@ -73,27 +129,27 @@ export default function BLESetting({navigation}) {
     wait(2000).then(()=>setRefresh(false));
   },[]);
 
-  const getData = () => {
-    try {
-        db.transaction((tx) => {
-            tx.executeSql(
-                "SELECT mac_address FROM ble_device",
-                [],
-                (tx, results) => {
-                    var len = results.rows.length;
-                    if (len > 0) {
-                        console.log(len)
-                    }
-                    else{
-                        console.log("No data found")
-                    }
-                }
-            )
-        })
-    } catch (error) {
-        console.log(error);
-    }
-}
+//   const getData = () => {
+//     try {
+//         db.transaction((tx) => {
+//             tx.executeSql(
+//                 "SELECT mac_address FROM ble_device",
+//                 [],
+//                 (tx, results) => {
+//                     var len = results.rows.length;
+//                     if (len > 0) {
+//                         console.log(len)
+//                     }
+//                     else{
+//                         console.log("No data found")
+//                     }
+//                 }
+//             )
+//         })
+//     } catch (error) {
+//         console.log(error);
+//     }
+// }
 
   const ItemSeparator = () => {
     return (
@@ -107,6 +163,7 @@ export default function BLESetting({navigation}) {
     );
   };
 
+  // check db is empty or not
   const emptyMSG = (status) => {
     return (
       <SafeAreaView style={{ flex: 1 }}>
@@ -149,6 +206,7 @@ export default function BLESetting({navigation}) {
       </View>
     
       <View style={{ flex: 1 }}>
+        
         {empty ? emptyMSG(empty) :
           <FlatList
             data={items}
@@ -167,6 +225,32 @@ export default function BLESetting({navigation}) {
           />
         }
       </View>
+
+      <View
+        style={{
+          height: 3,
+          width: '100%',
+          backgroundColor: '#000'
+        }}
+      />
+
+      <View style={{minHeight:100}}>
+        <Text style={styles.title}>Set the alert time range:</Text>
+        <Button title="From:" onPress={showTimePicker}/>
+          <DateTimePickerModal
+            isVisible={isTimePickerVisible}
+            mode="time"
+            onConfirm={handleFromTimePicker}
+            onCancel={hideTimePicker}
+          />
+        <Button title="To:" onPress={showTimePicker} />
+          <DateTimePickerModal
+            isVisible={isTimePickerVisible}
+            mode="time"
+            onConfirm={handleToTimePicker}
+            onCancel={hideTimePicker}
+          />
+      </View>
     </SafeAreaView>
   );
 }
@@ -180,6 +264,11 @@ const styles = StyleSheet.create({
   },  
   itemsStyle: {
     fontSize: 22,
+    color: '#000'
+  },
+  title:{
+    fontSize:22,
+    fontWeight:"bold",
     color: '#000'
   },
 });
