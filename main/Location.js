@@ -1,7 +1,6 @@
 import React, {useEffect, useState, useCallback} from "react";
 import { StyleSheet, View, SafeAreaView, Text, PermissionsAndroid,
         ScrollView, RefreshControl, NativeModules, NativeEventEmitter, Image } from "react-native";
-// import Eddystone from "@lg2/react-native-eddystone";
 import { openDatabase } from 'react-native-sqlite-storage';
 import { useIsFocused } from '@react-navigation/native';
 import BleManager from './BleManager';
@@ -279,18 +278,6 @@ export default function Location({navigation}){
         >
       <View style={{ flex: 1 }}>
         {empty ? emptyMSG(empty) : MSG(isFound)}
-          {/* <FlatList
-            data={items}
-            refreshing={refresh}
-            onRefresh={onRefresh}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) =>
-              <View key={item.mac_address} style={{ padding: 20 }}>
-                <Text style={styles.itemsStyle}> {item.mac_address} </Text>
-                <Text style={styles.itemsStyle}> Name: {item.name} </Text>
-              </View>
-            }
-          /> */}
       </View>
       </ScrollView>
     </SafeAreaView>
