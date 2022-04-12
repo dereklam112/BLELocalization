@@ -9,6 +9,7 @@ import { openDatabase } from 'react-native-sqlite-storage';
 import BLEScanner from './main/BLEScanner';
 import BLESetting from './main/BLESetting';
 import Location from './main/Location'
+import Mailing from './main/Mailing';
 
 LogBox.ignoreAllLogs();
 // connect pre-populated database
@@ -36,7 +37,7 @@ const App = () => {
     <NavigationContainer>
       <Tab.Navigator initialRouteName="Location">
 
-        {/* Showing user left */}
+        {/* Showing user location */}
         <Tab.Screen
           name="Homepage"
           component={Location}
@@ -86,6 +87,23 @@ const App = () => {
             },
           }}
         />
+
+        {/* testing tab */}
+        {/* <Tab.Screen
+          name="Mailing"
+          component={Mailing}
+          options={{
+            title: 'Mailing',
+            headerStyle: {
+              backgroundColor: '#f7764f',
+              height: 40,
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold', 
+            },
+          }}
+        /> */}
 
       </Tab.Navigator>
     </NavigationContainer>

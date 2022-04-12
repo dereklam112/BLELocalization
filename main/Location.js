@@ -21,7 +21,7 @@ export default function Location({navigation}){
   const [items, setItems] = useState([]);
   const [empty, setEmpty] = useState([]);
   const [refresh, setRefresh] = useState(false);
-  const LoopTime = 30000; //60 sec
+  const LoopTime = 30000; //30 sec
   const [focus, setFocus] = useState(true);
   const [address, setAddress] = useState("");
   const [location, setLocation] = useState("");
@@ -212,7 +212,7 @@ export default function Location({navigation}){
           {isFound ? 
             <>
               <Text style={{ fontSize: 25, textAlign: 'center' }}>
-                User location is : {location}
+                User's location is : {location}
               </Text>
             </>
             :
