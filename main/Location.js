@@ -3,6 +3,7 @@ import { StyleSheet, View, SafeAreaView, Text, PermissionsAndroid,
         ScrollView, RefreshControl, } from "react-native";
 // import Eddystone from "@lg2/react-native-eddystone";
 import { openDatabase } from 'react-native-sqlite-storage';
+import { useIsFocused } from '@react-navigation/native';
 const db = openDatabase(
     {
       name: 'ble_db.db', 
@@ -16,6 +17,13 @@ export default function Location({navigation}){
   const [empty, setEmpty] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const LoopTime = 10000; //10 sec
+  const [focus, setFocus] = useState(true);
+
+  const screenFocus = () =>{
+    const isFocus = useIsFocused();
+    setFocus(isFocus)
+  }
+
 
     // get bluetooth permission
     const requestPermission = async () => {
@@ -44,26 +52,23 @@ export default function Location({navigation}){
 
 
   useEffect(() => {
-    // Eddystone.addListener("onUIDFrame", function(beacon) {
-    //   console.log(beacon);
-    // });
-    // Eddystone.startScanning();
+    screenFocus;
+    if(focus==true){
+      const interval = setInterval ( async () =>{
+        const permission = await requestPermission();
+        if (permission) {
+          getRSSI()
+        }
+        console.log("get rssi every 10 seconds")
+      }, LoopTime)
 
-    //looping the scan process every 10 sec
-    const interval = setInterval ( async () =>{
-      const permission = await requestPermission();
-      if (permission) {
-        getRSSI()
-      }
-      console.log("get rssi every 10 seconds")
-    }, LoopTime)
-
-    
-    return (() => {
-      console.log('unmount');
-      clearInterval(interval);
-    })
-  }, []);
+      
+      return (() => {
+        console.log('unmount');
+        clearInterval(interval);
+      })
+    }
+  }, [focus]);
 
   useEffect(() => {
     db.transaction((tx) => {

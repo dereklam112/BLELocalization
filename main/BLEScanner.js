@@ -9,6 +9,7 @@ import BleManager from './BleManager';
 import { LogBox } from 'react-native';
 LogBox.ignoreLogs(['new NativeEventEmitter']);
 import { openDatabase } from 'react-native-sqlite-storage';
+import { useIsFocused } from '@react-navigation/native';
 
 // connect to the sqlite db
 const db = openDatabase(
@@ -28,6 +29,12 @@ const BLEScanner = ({navigation}) => {
   const [list, setList] = useState([]);
   const [discoveredBleList, setDiscoveredBleList] = useState([]);
   const LoopTime = 10000; //10 sec
+  const [focus, setFocus] = useState(true);
+
+  const screenFocus = () =>{
+    const isFocus = useIsFocused();
+    setFocus(isFocus)
+  }
 
   // get bluetooth permission
   const requestPermission = async () => {
@@ -106,30 +113,37 @@ const BLEScanner = ({navigation}) => {
 
 
   useEffect(() => {
-    BleManager.start({showAlert: false});
-    bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
-    bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan );
-    bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDisconnectedPeripheral );
-
-    //looping the scan process every 10 sec
-    const interval = setInterval ( async () =>{
-      btState();
-      const permission = await requestPermission();
-      if (permission) {
-        startScan()
-      }
-      // console.log("log every 10 seconds")
-    }, LoopTime)
-
-    
-    return (() => {
-      console.log('unmount');
-      bleManagerEmitter.removeListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
-      bleManagerEmitter.removeListener('BleManagerStopScan', handleStopScan );
-      bleManagerEmitter.removeListener('BleManagerDisconnectPeripheral', handleDisconnectedPeripheral );
-      clearInterval(interval);
-    })
-  }, []);
+    // check for active screen
+    screenFocus;
+    if (focus==true){
+      BleManager.start({showAlert: false});
+      bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
+      bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan );
+      bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDisconnectedPeripheral );
+  
+      //looping the scan process every 10 sec
+      const interval = setInterval ( async () =>{
+        btState();
+        const permission = await requestPermission();
+        if (permission) {
+          startScan()
+        }
+        console.log("log every 10 seconds")
+      }, LoopTime)
+  
+      
+      return (() => {
+        console.log('unmount');
+        bleManagerEmitter.removeListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
+        bleManagerEmitter.removeListener('BleManagerStopScan', handleStopScan );
+        bleManagerEmitter.removeListener('BleManagerDisconnectPeripheral', handleDisconnectedPeripheral );
+        clearInterval(interval);
+      })
+    }
+    else{
+      console.log("this screen is inactive")
+    }
+  }, [focus]);
 
   // display the info of scanned ble devices
   const renderItem = (item) => {
