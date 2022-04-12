@@ -2,7 +2,7 @@ import React, {useEffect} from 'react';
 import 'react-native-gesture-handler';
 import {NavigationContainer} from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, LogBox } from "react-native";
+import { View, LogBox} from "react-native";
 import { openDatabase } from 'react-native-sqlite-storage';
 
 // import all page
@@ -25,7 +25,8 @@ const App = () => {
           if (res.rows.length == 0) {
             txn.executeSql('DROP TABLE IF EXISTS ble_device', []);
             txn.executeSql(
-              'CREATE TABLE IF NOT EXISTS ble_device(mac_address VARCHAR(255) PRIMARY KEY, name TEXT)',[]);
+              'CREATE TABLE IF NOT EXISTS ble_device(mac_address VARCHAR(255) PRIMARY KEY, name TEXT DEFAULT "No Name")',[]);
+            console.log("db created")
           }
         }
       );

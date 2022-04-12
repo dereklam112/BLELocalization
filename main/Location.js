@@ -1,9 +1,11 @@
 import React, {useEffect, useState, useCallback} from "react";
 import { StyleSheet, View, SafeAreaView, Text, PermissionsAndroid,
-        ScrollView, RefreshControl, } from "react-native";
+        ScrollView, RefreshControl, NativeModules, NativeEventEmitter, } from "react-native";
 // import Eddystone from "@lg2/react-native-eddystone";
 import { openDatabase } from 'react-native-sqlite-storage';
 import { useIsFocused } from '@react-navigation/native';
+import BleManager from './BleManager';
+
 const db = openDatabase(
     {
       name: 'ble_db.db', 
@@ -12,59 +14,89 @@ const db = openDatabase(
     error => {console.log(error)}
   );
   
+const BleManagerModule = NativeModules.BleManager;
+const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+
 export default function Location({navigation}){
+  const [isScanning, setIsScanning] = useState(false);
   const [items, setItems] = useState([]);
   const [empty, setEmpty] = useState([]);
   const [refresh, setRefresh] = useState(false);
-  const LoopTime = 10000; //10 sec
+  const LoopTime = 60000; //60 sec
   const [focus, setFocus] = useState(true);
+  const [address, setAddress] = useState("");
+  const [location, setLocation] = useState("");
 
   const screenFocus = () =>{
     const isFocus = useIsFocused();
     setFocus(isFocus)
   }
 
-
-    // get bluetooth permission
-    const requestPermission = async () => {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
-            title: "Request for Location Permission",
-            message: "Bluetooth Scanner requires access to Fine Location Permission",
-            buttonNeutral: "Ask Me Later",
-            buttonNegative: "Cancel",
-            buttonPositive: "OK"
-          }
-        );
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          console.log('Permission is OK');
-          return true;
-        } else {
-          console.log('Permission denied');
-          return false;
+  // get bluetooth permission
+  const requestPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
+          title: "Request for Location Permission",
+          message: "Bluetooth Scanner requires access to Fine Location Permission",
+          buttonNeutral: "Ask Me Later",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK"
         }
-      } catch (err) {
-        console.warn(err);
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('Permission is OK');
+        return true;
+      } else {
+        console.log('Permission denied');
         return false;
       }
+    } catch (err) {
+      console.warn(err);
+      return false;
     }
+  }
+
+  useEffect(()=>{
+    db.transaction(function (txn) {
+      txn.executeSql(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='temp_reading'",[],
+        function (tx, res) {
+          console.log('temp reading item:', res.rows.length);
+          if (res.rows.length > 0) {
+            txn.executeSql('DROP TABLE IF EXISTS temp_reading', []);
+            txn.executeSql(
+              'CREATE TABLE IF NOT EXISTS temp_reading(id INTEGER NOT NULL, mac_address TEXT, rssi INTEGER, PRIMARY KEY (id AUTOINCREMENT))',[]);
+            console.log("db created");
+          }
+        }
+      );
+    });
+  },[isScanning]);
 
 
-  useEffect(() => {
+  useEffect( () => {
     screenFocus;
     if(focus==true){
+      BleManager.start({showAlert: false});
+      bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
+      bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan );
+      const permission = requestPermission();
+      if (permission){
+        getRSSI(); //trigger once when the app started
+      }
       const interval = setInterval ( async () =>{
-        const permission = await requestPermission();
-        if (permission) {
+        if (permission && focus) {
           getRSSI()
         }
-        console.log("get rssi every 10 seconds")
+        console.log("get rssi every 1 min")
       }, LoopTime)
 
       
       return (() => {
         console.log('unmount');
+        bleManagerEmitter.removeListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
+        bleManagerEmitter.removeListener('BleManagerStopScan', handleStopScan );
         clearInterval(interval);
       })
     }
@@ -92,6 +124,33 @@ export default function Location({navigation}){
     });
     console.log(items);
   }, [refresh]);
+
+  useEffect(()=>{
+    db.transaction((tx)=>{
+      tx.executeSql(
+        'SELECT mac_address FROM temp_reading ORDER BY rssi DESC LIMIT 1',[],
+        (tx, res) =>{
+          var temp_address = [];
+          temp_address.push(res.rows.item(0));
+          // console.warn(temp_address[0].mac_address);
+          // console.warn(typeof(temp_address[0].mac_address));
+          setAddress(temp_address[0].mac_address);
+          // console.log("set address ok")
+        }
+      )
+    })
+    db.transaction((tx)=>{
+      tx.executeSql(
+        'SELECT name from ble_device WHERE mac_address=?',[address],
+        (tx, res) =>{
+          var temp_location = [];
+          temp_location.push(res.rows.item(0));
+          setLocation(temp_location[0].name);
+          // console.log("set location ok")
+        }
+      )
+    })
+  },[refresh])
 
   // handle screen refresh
   const wait = (timeout) => {
@@ -127,14 +186,37 @@ export default function Location({navigation}){
   }
 
   const getRSSI  = () =>{
-    console.log("test")
+    // console.log("test")
+    if (!isScanning) {
+      // scan for Eddystone Service UUID (feaa)
+      BleManager.scan(["feaa"], 30, true).then((results) => {
+        console.log('Scanning...');
+        setIsScanning(true);
+      }).catch(err => {
+        console.error(err);
+      });
+    }   
+  }
 
+  const handleStopScan = () => {
+    console.log('Scan is stopped');
+    setIsScanning(false);
+  }
 
-    // BleManager.readRSSI("E7:A4:A5:8D:3F:55").then((rssi)=>{
-    //   console.log("Current RSSI: " + rssi);
-    // }).catch((error) => {
-    //   console.warn(error);
-    // });
+  // get scanned ble device info
+  const handleDiscoverPeripheral = (peripheral) => {
+    console.log('Detected BLE Device', peripheral.id, peripheral.rssi);
+    db.transaction(function(tx){
+      tx.executeSql(
+        "INSERT INTO temp_reading (mac_address, rssi) VALUES (?, ?)",[peripheral.id, peripheral.rssi],
+        // (tx, res) => {
+        //   console.log("Result", res.rowsAffected);
+        //   if (res.rowsAffected > 0){
+        //     console.log("Data inserted")
+        //   }
+        // }
+      )
+    })
   }
 
   return(
@@ -149,7 +231,7 @@ export default function Location({navigation}){
         >
       <View style={{ flex: 1 }}>
         {empty ? emptyMSG(empty) :
-          <Text>test</Text>
+          <Text>The location is : {location}</Text>
           // <FlatList
           //   data={items}
           //   refreshing={refresh}

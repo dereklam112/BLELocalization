@@ -86,7 +86,7 @@ const BLEScanner = ({navigation}) => {
       }).catch(err => {
         console.error(err);
       });
-    }    
+    }
   }
   
   const handleStopScan = () => {
@@ -96,7 +96,7 @@ const BLEScanner = ({navigation}) => {
   
   // get scanned ble device info
   const handleDiscoverPeripheral = (peripheral) => {
-    // console.log('Detected BLE Device', peripheral.id, peripheral.rssi);
+    // console.log('Detected BLE Device', peripheral.id, peripheral.rssi, peripheral.advertising );
     peripherals.set(peripheral.id, peripheral);
     setList(Array.from(peripherals.values()));
   }
@@ -111,7 +111,6 @@ const BLEScanner = ({navigation}) => {
     console.log('Disconnected from ' + data.peripheral);
   }
 
-
   useEffect(() => {
     // check for active screen
     screenFocus;
@@ -125,7 +124,7 @@ const BLEScanner = ({navigation}) => {
       const interval = setInterval ( async () =>{
         btState();
         const permission = await requestPermission();
-        if (permission) {
+        if (permission && focus) {
           startScan()
         }
         console.log("log every 10 seconds")
