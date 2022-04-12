@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useCallback} from "react";
 import { StyleSheet, View, SafeAreaView, Text, PermissionsAndroid,
-        ScrollView, RefreshControl, NativeModules, NativeEventEmitter, } from "react-native";
+        ScrollView, RefreshControl, NativeModules, NativeEventEmitter, Image } from "react-native";
 // import Eddystone from "@lg2/react-native-eddystone";
 import { openDatabase } from 'react-native-sqlite-storage';
 import { useIsFocused } from '@react-navigation/native';
@@ -22,10 +22,11 @@ export default function Location({navigation}){
   const [items, setItems] = useState([]);
   const [empty, setEmpty] = useState([]);
   const [refresh, setRefresh] = useState(false);
-  const LoopTime = 60000; //60 sec
+  const LoopTime = 30000; //60 sec
   const [focus, setFocus] = useState(true);
   const [address, setAddress] = useState("");
   const [location, setLocation] = useState("");
+  const [isFound, setIsFound] = useState([]);
 
   const screenFocus = () =>{
     const isFocus = useIsFocused();
@@ -89,7 +90,7 @@ export default function Location({navigation}){
         if (permission && focus) {
           getRSSI()
         }
-        console.log("get rssi every 1 min")
+        console.log("get user location every 30sec")
       }, LoopTime)
 
       
@@ -131,9 +132,11 @@ export default function Location({navigation}){
         'SELECT mac_address FROM temp_reading WHERE mac_address IN (SELECT mac_address FROM ble_device) ORDER BY rssi DESC LIMIT 1',[],
         (tx, res) =>{
           if (res.rows.length==0){
-            console.warn("no record")
+            console.warn("no record");
+            setIsFound(false);
           }
           else{
+            setIsFound(true);
             var temp_address = [];
             temp_address.push(res.rows.item(0));
             console.warn(temp_address[0].mac_address);
@@ -196,11 +199,45 @@ export default function Location({navigation}){
     );
   }
 
+  const MSG = (status) => {
+    return(
+      <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refresh}
+          onRefresh={onRefresh}
+        />
+      }>
+        <View style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+          {isFound ? 
+            <>
+              <Text style={{ fontSize: 25, textAlign: 'center' }}>
+                User location is : {location}
+              </Text>
+            </>
+            :
+            <>
+              <Text style={{ fontSize: 25, textAlign: 'center' }}>
+                User has left the location
+              </Text>
+              <Image 
+                source={require("./image/leaving.jpg")} 
+                style={{width: '100%', height:400}}
+              />
+            </>
+          }
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+    );
+  }
+
   const getRSSI  = () =>{
     // console.log("test")
     if (!isScanning) {
       // scan for Eddystone Service UUID (feaa)
-      BleManager.scan(["feaa"], 30, true).then((results) => {
+      BleManager.scan(["feaa"], 20, true).then((results) => {
         console.log('Scanning...');
         setIsScanning(true);
       }).catch(err => {
@@ -241,21 +278,19 @@ export default function Location({navigation}){
         }
         >
       <View style={{ flex: 1 }}>
-        {empty ? emptyMSG(empty) :
-          <Text>User location is : {location}</Text>
-          // <FlatList
-          //   data={items}
-          //   refreshing={refresh}
-          //   onRefresh={onRefresh}
-          //   keyExtractor={(item, index) => index.toString()}
-          //   renderItem={({ item }) =>
-          //     <View key={item.mac_address} style={{ padding: 20 }}>
-          //       <Text style={styles.itemsStyle}> {item.mac_address} </Text>
-          //       <Text style={styles.itemsStyle}> Name: {item.name} </Text>
-          //     </View>
-          //   }
-          // />
-        }
+        {empty ? emptyMSG(empty) : MSG(isFound)}
+          {/* <FlatList
+            data={items}
+            refreshing={refresh}
+            onRefresh={onRefresh}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) =>
+              <View key={item.mac_address} style={{ padding: 20 }}>
+                <Text style={styles.itemsStyle}> {item.mac_address} </Text>
+                <Text style={styles.itemsStyle}> Name: {item.name} </Text>
+              </View>
+            }
+          /> */}
       </View>
       </ScrollView>
     </SafeAreaView>
