@@ -128,14 +128,19 @@ export default function Location({navigation}){
   useEffect(()=>{
     db.transaction((tx)=>{
       tx.executeSql(
-        'SELECT mac_address FROM temp_reading ORDER BY rssi DESC LIMIT 1',[],
+        'SELECT mac_address FROM temp_reading WHERE mac_address IN (SELECT mac_address FROM ble_device) ORDER BY rssi DESC LIMIT 1',[],
         (tx, res) =>{
-          var temp_address = [];
-          temp_address.push(res.rows.item(0));
-          // console.warn(temp_address[0].mac_address);
-          // console.warn(typeof(temp_address[0].mac_address));
-          setAddress(temp_address[0].mac_address);
-          // console.log("set address ok")
+          if (res.rows.length==0){
+            console.warn("no record")
+          }
+          else{
+            var temp_address = [];
+            temp_address.push(res.rows.item(0));
+            console.warn(temp_address[0].mac_address);
+            // console.warn(typeof(temp_address[0].mac_address));
+            setAddress(temp_address[0].mac_address);
+            // console.log("set address ok")
+          }
         }
       )
     })
@@ -143,10 +148,16 @@ export default function Location({navigation}){
       tx.executeSql(
         'SELECT name from ble_device WHERE mac_address=?',[address],
         (tx, res) =>{
-          var temp_location = [];
-          temp_location.push(res.rows.item(0));
-          setLocation(temp_location[0].name);
-          // console.log("set location ok")
+          if (res.rows.length==0){
+            console.warn("no record")
+          }
+          else{
+            var temp_location = [];
+            temp_location.push(res.rows.item(0));
+            setLocation(temp_location[0].name);
+            console.warn(location);
+            console.log("set location ok");
+          }
         }
       )
     })
@@ -231,7 +242,7 @@ export default function Location({navigation}){
         >
       <View style={{ flex: 1 }}>
         {empty ? emptyMSG(empty) :
-          <Text>The location is : {location}</Text>
+          <Text>User location is : {location}</Text>
           // <FlatList
           //   data={items}
           //   refreshing={refresh}
