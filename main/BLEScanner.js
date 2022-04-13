@@ -96,7 +96,7 @@ const BLEScanner = ({navigation}) => {
   
   // get scanned ble device info
   const handleDiscoverPeripheral = (peripheral) => {
-    // console.log('Detected BLE Device', peripheral.id, peripheral.rssi, peripheral.advertising );
+    console.log('Detected BLE Device', peripheral.id, peripheral.rssi, peripheral.advertising );
     peripherals.set(peripheral.id, peripheral);
     setList(Array.from(peripherals.values()));
   }

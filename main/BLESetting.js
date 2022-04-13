@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { StyleSheet, TouchableOpacity, View, SafeAreaView, 
-          Text, ScrollView, RefreshControl, Button, FlatList  } from "react-native";
+          Text, ScrollView, RefreshControl, Button, FlatList, TextInput  } from "react-native";
 import Dialog from "react-native-dialog";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { openDatabase } from 'react-native-sqlite-storage';
@@ -22,6 +22,7 @@ export default function BLESetting({navigation}) {
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
   const [fromTime, setFromTime] = useState(new Date);
   const [toTime, setToTime] = useState(new Date);
+  const [info, setInfo] = useState("");
 
   // get db data
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function BLESetting({navigation}) {
     });
   }, [refresh]);
 
+  // set alert time range (from)
   useEffect(()=>{
     db.transaction(function(tx){
       tx.executeSql(
@@ -60,6 +62,7 @@ export default function BLESetting({navigation}) {
     })
   },[fromTime])
 
+   // set alert time range (To)
   useEffect(()=>{
     db.transaction(function(tx){
       tx.executeSql(
@@ -73,6 +76,21 @@ export default function BLESetting({navigation}) {
       )
     })
   },[toTime])
+
+    // set caregiver email
+  useEffect(()=>{
+    db.transaction(function(tx){
+      tx.executeSql(
+        "UPDATE caregiver SET to=? WHERE id=1",[info],
+        (tx, res) => {
+          console.log("Result", res.rowsAffected);
+          if (res.rowsAffected > 0){
+            console.log("Data Updated")
+          }
+        }
+      )
+    })
+  },[info])
 
   // handle dialog
   const showDialog = (e) => {
@@ -233,6 +251,14 @@ export default function BLESetting({navigation}) {
           backgroundColor: '#000'
         }}
       />
+      <View style={{minHeight:75}}>  
+        <Text style={styles.title}>Set the caregiver email:</Text>
+        <TextInput 
+          style={styles.input}
+          onChangeText={setInfo}
+          value = {info}
+        />
+      </View>
 
       <View style={{minHeight:100}}>
         <Text style={styles.title}>Set the alert time range:</Text>
@@ -270,5 +296,11 @@ const styles = StyleSheet.create({
     fontSize:22,
     fontWeight:"bold",
     color: '#000'
+  },
+  input: {
+    height: 40,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
   },
 });
