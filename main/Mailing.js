@@ -43,8 +43,8 @@ export default function Mailing({navigation}){
       mailhost: "smtp.gmail.com",
       port: "465",
       ssl: true, // optional. if false, then TLS is enabled. Its true by default in android. In iOS TLS/SSL is determined automatically, and this field doesn't affect anything
-      username: "shiroarashi112@gmail.com",
-      password: "Y6929905",
+      username: "example@gmail.com",
+      password: "password",
       recipients: email,
       subject: "Alert message",
       htmlBody: "<h1>Alert</h1><p>The user has left the area in the alert time range</p>",
